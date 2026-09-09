@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suraksha AR — Vocational Safety Trainer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ol+Chiki&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#12213C; --navy-2:#1B2E52; --amber:#F2A900; --amber-dim:#8A6205;
+    --danger:#C1272D; --safe:#2E8B57; --paper:#F4F1E9; --ink:#12213C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif; background:#0C1526; color:var(--ink); min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center; padding:28px 12px;}
+  h1,h2,h3,.display{font-family:'Barlow Condensed',sans-serif; letter-spacing:0.01em;}
+  .sat{font-family:'Noto Sans Ol Chiki','Inter',sans-serif;}
+  .rig{width:100%; max-width:430px;}
+  .device{background:var(--paper); border-radius:28px; overflow:hidden;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6), 0 0 0 8px #05070C;
+    min-height:820px; display:flex; flex-direction:column; position:relative;}
+  .hazard-strip{height:6px; background:repeating-linear-gradient(45deg, var(--amber) 0 10px, #14161a 10px 20px);}
+  .topbar{background:var(--navy); color:#fff; padding:16px 20px 14px;}
+  .topbar .brand{display:flex; align-items:center; gap:9px; font-family:'Barlow Condensed',sans-serif;
+    font-weight:700; font-size:20px;}
+  .brand-mark{width:26px;height:26px;border-radius:6px; background:var(--amber);
+    display:flex;align-items:center;justify-content:center; color:var(--navy); font-weight:800; font-size:14px; flex-shrink:0;}
+  .offline-tag{font-size:10.5px; font-weight:700; background:rgba(255,255,255,0.15); color:#fff;
+    padding:3px 8px; border-radius:20px; display:flex; align-items:center; gap:4px; margin-left:auto;}
+  .offline-tag .d{width:6px;height:6px;border-radius:50%;}
+  .progress{display:flex; gap:4px; margin-top:12px;}
+  .progress i{flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,0.18);}
+  .progress i.on{background:var(--amber);}
+  .screen{flex:1; padding:22px 20px 26px; display:none; flex-direction:column; overflow-y:auto;}
+  .screen.active{display:flex;}
+  .eyebrow{font-size:12px; color:var(--amber-dim); font-weight:700; margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em;}
+  .lead{font-size:25px; font-weight:700; color:var(--navy); line-height:1.12; margin:0 0 6px;}
+  .sub{color:#5b5f6b; font-size:13.8px; line-height:1.55; margin:0 0 18px;}
+  .btn{appearance:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:15px; border-radius:10px; padding:13px 18px; display:flex; align-items:center;
+    justify-content:center; gap:8px; transition:transform .12s ease;}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{background:var(--amber); color:var(--navy);}
+  .btn-ghost{background:transparent; color:var(--navy); border:1.5px solid #d8d4c6;}
+  .btn-danger{background:var(--danger); color:#fff;}
+  .btn-outline-safe{background:#fff; color:var(--safe); border:1.5px solid var(--safe);}
+  .card{background:#fff; border:1px solid #e6e2d5; border-radius:14px; padding:16px; margin-bottom:12px;}
+  .lang-opt{display:flex; align-items:center; justify-content:space-between; padding:16px;
+    border-radius:12px; border:1.5px solid #e0dccd; background:#fff; cursor:pointer; margin-bottom:10px;
+    font-weight:600; font-size:15px;}
+  .lang-opt small{display:block; font-weight:400; color:#7a7d86; font-size:12px; margin-top:2px;}
+  .lang-opt.sel{border-color:var(--amber); background:#FFF7E4;}
+  .mod-card{display:flex; gap:12px; padding:14px; border-radius:14px; border:1.5px solid #e0dccd;
+    background:#fff; cursor:pointer; margin-bottom:10px; align-items:flex-start;}
+  .mod-card.sel{border-color:var(--amber); background:#FFF7E4;}
+  .mod-ic{width:42px;height:42px;border-radius:10px; flex-shrink:0; display:flex; align-items:center;
+    justify-content:center; font-size:19px;}
+  .mod-fire{background:#FDEAE8; color:var(--danger);}
+  .mod-gas{background:#E9F0FA; color:#2857A8;}
+  .mod-title{font-weight:700; font-size:14.5px;}
+  .mod-desc{font-size:12.3px; color:#7a7d86; margin-top:2px; line-height:1.4;}
+  .chip{display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:6px;}
+  .chip-easy{background:#EEF7F1; color:var(--safe);}
+  .chip-hard{background:#FDEAE8; color:var(--danger);}
+  .scene{position:relative; border-radius:16px; overflow:hidden; height:230px;
+    background:linear-gradient(180deg,#3a3f33 0%, #23261e 65%, #14150f 100%); margin-bottom:12px;}
+  .hotspot{position:absolute; width:32px; height:32px; border-radius:50%; background:rgba(193,39,45,0.85);
+    border:2px solid #fff; display:flex; align-items:center; justify-content:center; color:#fff;
+    font-weight:700; font-size:13px; cursor:pointer; animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(193,39,45,0.55);}70%{box-shadow:0 0 0 14px rgba(193,39,45,0);}100%{box-shadow:0 0 0 0 rgba(193,39,45,0);}}
+  .scene-tag{position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.55); color:#fff; font-size:11px;
+    padding:4px 9px; border-radius:20px; font-weight:600; display:flex; align-items:center; gap:5px;}
+  .scene-tag .dot{width:6px;height:6px;border-radius:50%; background:#39d353;}
+  .hs-counter{position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.55); color:#fff; font-size:11px;
+    padding:4px 9px; border-radius:20px; font-weight:700;}
+  .steplist{list-style:none; margin:0 0 16px; padding:0;}
+  .steplist li{display:flex; gap:10px; align-items:flex-start; padding:11px 0; border-bottom:1px solid #efece1; font-size:13.8px;}
+  .steplist li:last-child{border-bottom:none;}
+  .steplist .num{width:24px;height:24px;border-radius:50%; background:var(--navy); color:#fff; font-size:12px;
+    font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .qbank-progress{font-size:12px; color:#8a8d96; font-weight:600; margin-bottom:4px;}
+  .q-opt{display:flex; align-items:center; gap:10px; padding:13px 14px; border-radius:11px; border:1.5px solid #e0dccd;
+    background:#fff; margin-bottom:9px; cursor:pointer; font-size:14.3px; font-weight:500;}
+  .q-opt .box{width:18px;height:18px;border-radius:5px;border:1.5px solid #b9b4a2; flex-shrink:0;}
+  .q-opt.correct{border-color:var(--safe); background:#EEF7F1;}
+  .q-opt.correct .box{background:var(--safe); border-color:var(--safe);}
+  .q-opt.wrong{border-color:var(--danger); background:#FBEEEE;}
+  .q-opt.wrong .box{background:var(--danger); border-color:var(--danger);}
+  .scorewrap{display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:2px;}
+  .scoring-ring{width:150px; height:150px; border-radius:50%;
+    background:conic-gradient(var(--ring-color,var(--safe)) calc(var(--pct,0)*1%), #e7e3d5 0);
+    display:flex; align-items:center; justify-content:center; margin-bottom:16px;}
+  .scoring-ring .inner{width:118px; height:118px; border-radius:50%; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .badge{display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:12.3px;
+    padding:5px 11px; border-radius:20px; margin-bottom:10px;}
+  .badge-pass{background:#EEF7F1; color:var(--safe);}
+  .badge-fail{background:#FBEEEE; color:var(--danger);}
+  .breakdown{width:100%; text-align:left; margin-top:6px;}
+  .breakdown .row{display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid #efece1;}
+  .qr-box{background:#fff; border:1px solid #e6e2d5; border-radius:14px; padding:18px;
+    display:flex; flex-direction:column; align-items:center; margin:12px 0;}
+  #qrcode{margin:8px 0;}
+  .nav-row{display:flex; gap:10px; margin-top:auto; padding-top:16px;}
+  .nav-row .btn{flex:1;}
+  table.dash{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.dash th{text-align:left; color:#8a8d96; font-weight:600; padding:6px 5px; border-bottom:1px solid #e6e2d5;
+    font-size:10.8px; text-transform:uppercase; letter-spacing:.03em;}
+  table.dash td{padding:9px 5px; border-bottom:1px solid #efece1;}
+  .pill{font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px;}
+  .pill.pass{background:#EEF7F1; color:var(--safe);}
+  .pill.fail{background:#FBEEEE; color:var(--danger);}
+  .pill.pending{background:#FFF3DA; color:var(--amber-dim);}
+  .stat{background:#fff; border:1px solid #e6e2d5; border-radius:12px; padding:12px; flex:1;}
+  .stat .n{font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:700; color:var(--navy); line-height:1;}
+  .stat .l{font-size:10.5px; color:#8a8d96; margin-top:3px;}
+  .footnote{text-align:center; color:#6b6e78; font-size:12px; margin-top:16px; line-height:1.5;}
+  .barrow{display:flex; align-items:center; gap:8px; margin-bottom:9px; font-size:12px;}
+  .barrow .lbl{width:96px; flex-shrink:0; color:#5b5f6b; font-weight:600;}
+  .barrow .track{flex:1; background:#efece1; border-radius:6px; height:14px; overflow:hidden;}
+  .barrow .fill{height:100%; border-radius:6px;}
+  .barrow .val{width:38px; text-align:right; font-weight:700; color:var(--navy); flex-shrink:0;}
+  .searchbox{width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid #e0dccd; font-size:13.5px;
+    margin-bottom:10px; font-family:inherit;}
+  .verify-result{margin-top:10px; padding:12px; border-radius:10px; font-size:13px; font-weight:600; display:none;}
+  .verify-ok{background:#EEF7F1; color:var(--safe); display:block;}
+  .verify-bad{background:#FBEEEE; color:var(--danger); display:block;}
+  .tabbar{display:flex; gap:6px; margin-bottom:14px; background:#fff; border:1px solid #e6e2d5; border-radius:10px; padding:4px;}
+  .tabbar button{flex:1; border:none; background:none; padding:8px 4px; font-size:12.5px; font-weight:700;
+    border-radius:7px; cursor:pointer; color:#8a8d96; font-family:inherit;}
+  .tabbar button.on{background:var(--navy); color:#fff;}
+  .tabpane{display:none;}
+  .tabpane.on{display:block;}
+</style>
+</head>
+<body>
+<div class="rig">
+  <div class="device">
+    <div class="hazard-strip"></div>
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">SA</div>
+        <span id="appName">Suraksha AR</span>
+        <span id="netTag" class="offline-tag"><span class="d" style="background:#39d353;"></span>ONLINE</span>
+      </div>
+      <div class="progress" id="progressDots"></div>
+    </div>
+
+    <!-- 0: SPLASH -->
+    <div class="screen active" data-screen="0">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;">
+        <div style="width:64px;height:64px;border-radius:16px;background:var(--navy); display:flex; align-items:center; justify-content:center;">
+          <span style="font-family:'Barlow Condensed'; color:var(--amber); font-weight:800; font-size:26px;">SA</span>
+        </div>
+        <h1 class="lead" style="margin:0;">AR Vocational Safety Trainer</h1>
+        <p class="sub" style="margin:0;">Problem Statement 26041 · Govt. of Jharkhand, Dept. of Higher &amp; Technical Education<br>Team Vikrant — SIH 2026</p>
+        <div class="card" style="width:100%; text-align:left;">
+          <div style="font-size:12.5px; color:#5b5f6b; line-height:1.6;">
+            <strong>What this demo shows:</strong> the worker journey (language → AR scenario → guided response → scored assessment → QR certificate) plus the admin compliance dashboard described in your Technical Approach slide.
+          </div>
+        </div>
+      </div>
+      <div class="nav-row"><button class="btn btn-primary" style="flex:1" onclick="goTo(1)">Start demo →</button></div>
+    </div>
+
+    <!-- 1: LANGUAGE -->
+    <div class="screen" data-screen="1">
+      <div class="eyebrow">Step 1 of 7</div>
+      <h1 class="lead">Choose your language</h1>
+      <p class="sub">Apni bhasha chuniye. Training aur assessment isi bhasha mein dikhega.</p>
+      <div class="lang-opt sel" data-lang="hi">हिंदी (Hindi)<span>✓</span></div>
+      <div class="lang-opt sat" data-lang="sat">ᱥᱟᱱᱛᱟᱲᱤ (Santali)<span></span></div>
+      <div class="lang-opt" data-lang="en">English<span></span></div>
+      <div class="nav-row"><button class="btn btn-primary" style="flex:1" onclick="goTo(2)">Continue →</button></div>
+    </div>
+
+    <!-- 2: MODULE SELECT -->
+    <div class="screen" data-screen="2">
+      <div class="eyebrow">Step 2 of 7</div>
+      <h1 class="lead" id="modSelectTitle">Select a training module</h1>
+      <p class="sub">Prototype covers two modules from your PS scope.</p>
+      <div class="mod-card sel" data-mod="gas" onclick="selectModule('gas')">
+        <div class="mod-ic mod-gas">⛽</div>
+        <div>
+          <div class="mod-title">Gas Leak &amp; Confined Space Protocol</div>
+          <div class="mod-desc">Detect leak signs, evacuate correctly, confined-space entry rules.</div>
+          <span class="chip chip-easy">5 scenarios · 5 questions</span>
+        </div>
+      </div>
+      <div class="mod-card" data-mod="fire" onclick="selectModule('fire')">
+        <div class="mod-ic mod-fire">🔥</div>
+        <div>
+          <div class="mod-title">Fire &amp; Explosion Response</div>
+          <div class="mod-desc">PPE check, extinguisher selection, evacuation route under smoke.</div>
+          <span class="chip chip-hard">6 scenarios · 5 questions</span>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="goTo(1)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(3)">Enter AR simulation →</button>
+      </div>
+    </div>
+
+    <!-- 3: AR SCENARIO -->
+    <div class="screen" data-screen="3">
+      <div class="eyebrow" id="scenarioModTag">Step 3 of 7 · Module</div>
+      <h1 class="lead">Spot the hazards in AR</h1>
+      <p class="sub" id="scenarioSub">Tap every highlighted point your camera view would flag before continuing.</p>
+      <div class="scene">
+        <div class="scene-tag"><span class="dot"></span>AR overlay — live</div>
+        <div class="hs-counter" id="hsCounter">0/3 found</div>
+        <div id="hotspotLayer"></div>
+      </div>
+      <div class="card" id="scenarioFeedback" style="display:none;">
+        <strong style="font-size:13px;">All hazards logged.</strong>
+        <p id="scenarioFeedbackText" style="margin:6px 0 0; font-size:13px; color:#5b5f6b;"></p>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="goTo(2)">Back</button>
+        <button class="btn btn-primary" id="scenarioNext" disabled onclick="goTo(4)">Continue to response steps →</button>
+      </div>
+    </div>
+
+    <!-- 4: GUIDED STEPS -->
+    <div class="screen" data-screen="4">
+      <div class="eyebrow">Step 4 of 7 · Guided response</div>
+      <h1 class="lead">Follow the correct sequence</h1>
+      <p class="sub">This is what the AR module walks the worker through step by step, in their chosen language.</p>
+      <ol class="steplist" id="stepList"></ol>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="goTo(3)">Back</button>
+        <button class="btn btn-primary" onclick="startAssessment()">Begin assessment →</button>
+      </div>
+    </div>
+
+    <!-- 5: ASSESSMENT -->
+    <div class="screen" data-screen="5">
+      <div class="eyebrow">Step 5 of 7 · Scored assessment</div>
+      <div class="qbank-progress" id="qProgress">Question 1 of 5</div>
+      <h1 class="lead" id="qText" style="font-size:20px;"></h1>
+      <div id="qOptions"></div>
+      <div id="qFeedback" class="sub" style="display:none;"></div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="goTo(4)">Back</button>
+        <button class="btn btn-primary" id="qNext" disabled onclick="nextQuestion()">Next question →</button>
+      </div>
+    </div>
+
+    <!-- 6: RESULT (pass or fail) -->
+    <div class="screen" data-screen="6">
+      <div class="eyebrow">Step 6 of 7 · Result</div>
+      <h1 class="lead" id="resultTitle">Assessment complete</h1>
+      <div class="scorewrap">
+        <div class="scoring-ring" id="scoreRing">
+          <div class="inner">
+            <div id="scorePctText" style="font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:700; color:var(--navy);">—</div>
+            <div style="font-size:10.5px; color:#8a8d96;">SCORE</div>
+          </div>
+        </div>
+        <div id="resultBadge" class="badge">—</div>
+        <div class="card breakdown" id="breakdownCard"></div>
+      </div>
+      <div class="nav-row" id="resultNav"></div>
+    </div>
+
+    <!-- 7: QR CERTIFICATE -->
+    <div class="screen" data-screen="7">
+      <div class="eyebrow">Step 7 of 7</div>
+      <h1 class="lead">Certificate issued</h1>
+      <p class="sub">Show this QR at the site gate. Works fully offline — syncs to the dashboard once the network returns.</p>
+      <div class="qr-box">
+        <div id="qrcode"></div>
+        <div id="certDetails" style="font-size:12.3px; color:#5b5f6b; margin-top:8px; text-align:center; line-height:1.6;"></div>
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" onclick="goTo(6)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(8)">Open admin dashboard →</button>
+      </div>
+    </div>
+
+    <!-- 8: ADMIN DASHBOARD -->
+    <div class="screen" data-screen="8">
+      <div class="eyebrow">Compliance dashboard</div>
+      <h1 class="lead" style="font-size:21px;">Site: Bokaro Sector 4</h1>
+      <div class="tabbar">
+        <button class="on" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+        <button data-tab="workers" onclick="switchTab('workers')">Workers</button>
+        <button data-tab="verify" onclick="switchTab('verify')">QR Verify</button>
+      </div>
+
+      <div class="tabpane on" data-pane="overview">
+        <div style="display:flex; gap:9px; margin-bottom:14px;">
+          <div class="stat"><div class="n">148</div><div class="l">Workers trained</div></div>
+          <div class="stat"><div class="n">86%</div><div class="l">Avg. retention</div></div>
+          <div class="stat"><div class="n">6</div><div class="l">Awaiting sync</div></div>
+        </div>
+        <div class="card">
+          <strong style="font-size:12.5px;">Retention by training method</strong>
+          <div style="margin-top:12px;">
+            <div class="barrow"><span class="lbl">Classroom</span><div class="track"><div class="fill" style="width:35%; background:#9CA3AF;"></div></div><span class="val">35%</span></div>
+            <div class="barrow"><span class="lbl">VR headset</span><div class="track"><div class="fill" style="width:70%; background:#2857A8;"></div></div><span class="val">70%</span></div>
+            <div class="barrow"><span class="lbl">Mobile AR</span><div class="track"><div class="fill" style="width:88%; background:var(--safe);"></div></div><span class="val">88%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <strong style="font-size:12.5px;">Pass rate by module</strong>
+          <div style="margin-top:12px;">
+            <div class="barrow"><span class="lbl">Gas Leak</span><div class="track"><div class="fill" style="width:82%; background:var(--amber);"></div></div><span class="val">82%</span></div>
+            <div class="barrow"><span class="lbl">Fire Response</span><div class="track"><div class="fill" style="width:74%; background:var(--amber);"></div></div><span class="val">74%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpane" data-pane="workers">
+        <input class="searchbox" id="workerSearch" placeholder="Search worker name…" oninput="filterWorkers()">
+        <table class="dash" id="workerTable">
+          <tr><th>Worker</th><th>Module</th><th>Score</th><th>Status</th></tr>
+        </table>
+      </div>
+
+      <div class="tabpane" data-pane="verify">
+        <div class="card">
+          <strong style="font-size:13px;">Verify a certificate ID</strong>
+          <p class="sub" style="margin:6px 0 12px;">Simulates scanning the worker's QR at a site gate.</p>
+          <input class="searchbox" id="certInput" placeholder="e.g. VKT-26041-0917" style="margin-bottom:8px;">
+          <button class="btn btn-primary" style="width:100%;" onclick="verifyCert()">Verify</button>
+          <div id="verifyResult" class="verify-result"></div>
+        </div>
+        <p class="footnote" style="margin-top:0;">Try the ID from your own certificate screen, or "VKT-26041-0044" (also valid), or anything else (invalid).</p>
+      </div>
+
+      <p class="footnote">This simulates the REST API + compliance dashboard from your Technical Approach slide. All data here is placeholder.</p>
+      <div class="nav-row"><button class="btn btn-ghost" onclick="restartDemo()">↺ Restart demo</button></div>
+    </div>
+
+  </div>
+  <p class="footnote" style="color:#8b90a0;">Advanced clickable walkthrough for Team Vikrant's SIH 2026 submission (PS 26041) — not the AR engine itself. Built for pitching / judging, not production.</p>
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+const MODULES = {
+  gas: {
+    name: "Gas Leak & Confined Space Protocol",
+    tagClass: "mod-gas",
+    hotspots: [
+      {top:"30%", left:"20%", label:"Gas monitor reading spike"},
+      {top:"55%", left:"62%", label:"Unmarked confined-space entry"},
+      {top:"72%", left:"35%", label:"Missing barricade tape"}
+    ],
+    steps: [
+      "Stop work immediately and do not enter the flagged area.",
+      "Sound the alarm / alert the nearest supervisor.",
+      "Evacuate to the designated fresh-air assembly point.",
+      "Wait for the gas monitor team to confirm clearance.",
+      "Re-enter only with authorised confined-space permit and PPE."
+    ],
+    questions: [
+      {q:"A gas monitor alarm sounds nearby. What is your first action?", opts:["Evacuate to fresh air and alert your supervisor","Continue work, check later","Investigate the source yourself"], correct:0},
+      {q:"Before entering a confined space, you must:", opts:["Just ask a colleague to keep watch","Hold a valid confined-space entry permit","Enter quickly to finish the job faster"], correct:1},
+      {q:"Who confirms it is safe to re-enter after a gas leak?", opts:["Any nearby worker","The gas monitoring team","No confirmation needed after 10 minutes"], correct:1},
+      {q:"Missing barricade tape near a hazard means:", opts:["The area is safe to walk through","Report it — the area may not be marked as restricted","Ignore it, tape is optional"], correct:1},
+      {q:"The assembly point after evacuation is used to:", opts:["Take a break","Headcount workers and confirm everyone is safe","Store equipment"], correct:1}
+    ]
+  },
+  fire: {
+    name: "Fire & Explosion Response",
+    tagClass: "mod-fire",
+    hotspots: [
+      {top:"25%", left:"28%", label:"Smoke near electrical panel"},
+      {top:"50%", left:"65%", label:"Blocked fire exit"},
+      {top:"68%", left:"20%", label:"Wrong extinguisher type nearby"}
+    ],
+    steps: [
+      "Raise the alarm and alert workers in the immediate area.",
+      "Select the correct extinguisher class for the fire type.",
+      "Attempt to extinguish only if the fire is small and contained.",
+      "If it spreads, evacuate via the nearest clear route — never the blocked exit.",
+      "Report to the muster point and inform the site safety officer."
+    ],
+    questions: [
+      {q:"You see smoke near an electrical panel. First step?", opts:["Throw water on it","Raise the alarm, do not use water on electrical fire","Ignore if smoke is light"], correct:1},
+      {q:"A fire exit is blocked by stored material. You should:", opts:["Push through the material quickly","Use an alternate clear route and report the blockage","Wait next to the blocked exit"], correct:1},
+      {q:"Using the wrong extinguisher class can:", opts:["Make the fire worse or spread it","Have no effect either way","Only be a minor issue"], correct:0},
+      {q:"When should you attempt to fight a fire yourself?", opts:["Only if small, contained, and you're trained","Always, to save time","Never, under any condition"], correct:0},
+      {q:"After evacuating, you should report to:", opts:["Your own workstation","The muster point and site safety officer","Nobody, just wait outside"], correct:1}
+    ]
+  }
+};
+
+const I18N = {
+  hi: {appName:"सुरक्षा AR", modSelectTitle:"प्रशिक्षण मॉड्यूल चुनें"},
+  sat: {appName:"ᱥᱩᱨᱚᱠᱷᱟ AR", modSelectTitle:"ᱨᱮᱭᱟᱜ ᱢᱚᱰᱭᱩᱞ ᱵᱟᱪᱷᱟᱣ ᱢᱮ"},
+  en: {appName:"Suraksha AR", modSelectTitle:"Select a training module"}
+};
+
+/* ---------- STATE ---------- */
+let state = {
+  lang: "hi",
+  moduleId: "gas",
+  hotspotsFound: 0,
+  qIndex: 0,
+  answers: [],
+  workerName: "Ramesh Toppo"
+};
+
+const WORKERS = [
+  {name:"Ramesh Toppo", module:"Gas Leak", score:88, status:"pass"},
+  {name:"Sunita Devi", module:"Fire Response", score:91, status:"pass"},
+  {name:"Birsa Munda", module:"Gas Leak", score:54, status:"fail"},
+  {name:"Kajal Kumari", module:"Fire Response", score:null, status:"pending"},
+  {name:"Manoj Hembrom", module:"Gas Leak", score:79, status:"pass"},
+  {name:"Ashok Mahato", module:"Fire Response", score:61, status:"fail"}
+];
+const VALID_CERTS = ["VKT-26041-0917", "VKT-26041-0044"];
+
+/* ---------- NAV ---------- */
+const TOTAL_STEPS = 9; // screens 0-8
+function buildDots(){
+  const wrap = document.getElementById('progressDots');
+  wrap.innerHTML = "";
+  for(let i=0;i<TOTAL_STEPS;i++){
+    const dot = document.createElement('i');
+    dot.className = 'step-dot';
+    dot.dataset.step = i;
+    wrap.appendChild(dot);
+  }
+}
+buildDots();
+
+function goTo(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`.screen[data-screen="${n}"]`).classList.add('active');
+  document.querySelectorAll('.step-dot').forEach(d=>{
+    d.classList.toggle('on', parseInt(d.dataset.step) <= n);
+  });
+  if(n===3) renderScenario();
+  if(n===4) renderSteps();
+  if(n===7) renderCertificate();
+  if(n===8) renderDashboard();
+}
+
+/* ---------- LANGUAGE ---------- */
+document.querySelectorAll('.lang-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.lang-opt').forEach(o=>{o.classList.remove('sel'); o.querySelector('span').textContent='';});
+    el.classList.add('sel');
+    el.querySelector('span').textContent = '✓';
+    state.lang = el.dataset.lang;
+    applyI18n();
+  });
+});
+function applyI18n(){
+  const t = I18N[state.lang] || I18N.en;
+  document.getElementById('appName').textContent = t.appName;
+  document.getElementById('modSelectTitle').textContent = t.modSelectTitle;
+}
+
+/* ---------- MODULE SELECT ---------- */
+function selectModule(id){
+  state.moduleId = id;
+  document.querySelectorAll('.mod-card').forEach(c=>c.classList.toggle('sel', c.dataset.mod===id));
+}
+
+/* ---------- AR SCENARIO ---------- */
+function renderScenario(){
+  const mod = MODULES[state.moduleId];
+  state.hotspotsFound = 0;
+  document.getElementById('scenarioModTag').textContent = `Step 3 of 7 · ${mod.name}`;
+  document.getElementById('hsCounter').textContent = `0/${mod.hotspots.length} found`;
+  document.getElementById('scenarioFeedback').style.display = 'none';
+  document.getElementById('scenarioNext').disabled = true;
+  const layer = document.getElementById('hotspotLayer');
+  layer.innerHTML = "";
+  mod.hotspots.forEach((h,i)=>{
+    const el = document.createElement('div');
+    el.className = 'hotspot';
+    el.style.top = h.top; el.style.left = h.left;
+    el.textContent = '!';
+    el.onclick = ()=>markHotspot(el, i);
+    layer.appendChild(el);
+  });
+}
+function markHotspot(el, i){
+  if(el.dataset.done) return;
+  el.dataset.done = "1";
+  el.style.background = "rgba(46,139,87,0.9)";
+  el.textContent = "✓";
+  state.hotspotsFound++;
+  const mod = MODULES[state.moduleId];
+  document.getElementById('hsCounter').textContent = `${state.hotspotsFound}/${mod.hotspots.length} found`;
+  if(state.hotspotsFound >= mod.hotspots.length){
+    document.getElementById('scenarioFeedback').style.display = 'block';
+    document.getElementById('scenarioFeedbackText').textContent =
+      mod.hotspots.map(h=>h.label).join(" · ");
+    document.getElementById('scenarioNext').disabled = false;
+  }
+}
+
+/* ---------- GUIDED STEPS ---------- */
+function renderSteps(){
+  const mod = MODULES[state.moduleId];
+  const list = document.getElementById('stepList');
+  list.innerHTML = "";
+  mod.steps.forEach((s,i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="num">${i+1}</span><span>${s}</span>`;
+    list.appendChild(li);
+  });
+}
+
+/* ---------- ASSESSMENT ---------- */
+function startAssessment(){
+  state.qIndex = 0;
+  state.answers = [];
+  goTo(5);
+  renderQuestion();
+}
+function renderQuestion(){
+  const mod = MODULES[state.moduleId];
+  const q = mod.questions[state.qIndex];
+  document.getElementById('qProgress').textContent = `Question ${state.qIndex+1} of ${mod.questions.length}`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qFeedback').style.display = 'none';
+  document.getElementById('qNext').disabled = true;
+  const box = document.getElementById('qOptions');
+  box.innerHTML = "";
+  q.opts.forEach((opt,i)=>{
+    const el = document.createElement('div');
+    el.className = 'q-opt';
+    el.innerHTML = `<span class="box"></span>${opt}`;
+    el.onclick = ()=>selectAnswer(i, q.correct, el);
+    box.appendChild(el);
+  });
+  const nextBtn = document.getElementById('qNext');
+  nextBtn.textContent = (state.qIndex === mod.questions.length-1) ? "See result →" : "Next question →";
+}
+function selectAnswer(i, correctIdx, el){
+  if(el.parentElement.dataset.locked) return;
+  el.parentElement.dataset.locked = "1";
+  const opts = el.parentElement.querySelectorAll('.q-opt');
+  opts.forEach((o,idx)=>{
+    o.style.pointerEvents = 'none';
+    if(idx===correctIdx) o.classList.add('correct');
+    else if(idx===i) o.classList.add('wrong');
+  });
+  state.answers.push(i===correctIdx);
+  const fb = document.getElementById('qFeedback');
+  fb.style.display = 'block';
+  fb.textContent = (i===correctIdx) ? "Correct." : "Not quite — correct answer highlighted above.";
+  document.getElementById('qNext').disabled = false;
+}
+function nextQuestion(){
+  const mod = MODULES[state.moduleId];
+  document.getElementById('qOptions').dataset.locked = "";
+  const box = document.getElementById('qOptions');
+  delete box.dataset.locked;
+  if(state.qIndex < mod.questions.length-1){
+    state.qIndex++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+/* ---------- RESULT ---------- */
+function showResult(){
+  const mod = MODULES[state.moduleId];
+  const correctCount = state.answers.filter(Boolean).length;
+  const pct = Math.round((correctCount/mod.questions.length)*100);
+  const pass = pct >= 70;
+  goTo(6);
+  const ring = document.getElementById('scoreRing');
+  ring.style.setProperty('--pct', pct);
+  ring.style.setProperty('--ring-color', pass ? 'var(--safe)' : 'var(--danger)');
+  document.getElementById('scorePctText').textContent = pct+'%';
+  document.getElementById('resultTitle').textContent = pass ? "Assessment passed" : "Assessment not passed";
+  const badge = document.getElementById('resultBadge');
+  badge.className = 'badge ' + (pass ? 'badge-pass' : 'badge-fail');
+  badge.textContent = pass ? '✓ Competency verified' : '✕ Retry required (min. 70%)';
+
+  const bd = document.getElementById('breakdownCard');
+  bd.innerHTML = mod.questions.map((q,i)=>`
+    <div class="row"><span>Q${i+1}</span><span style="color:${state.answers[i]?'var(--safe)':'var(--danger)'};font-weight:700;">${state.answers[i]?'Correct':'Incorrect'}</span></div>
+  `).join("");
+
+  const nav = document.getElementById('resultNav');
+  if(pass){
+    nav.innerHTML = `<button class="btn btn-ghost" onclick="goTo(4)">Review steps</button>
+      <button class="btn btn-primary" onclick="goTo(7)">Get certificate →</button>`;
+  } else {
+    nav.innerHTML = `<button class="btn btn-ghost" onclick="goTo(4)">Review steps</button>
+      <button class="btn btn-danger" onclick="startAssessment()">Retry assessment</button>`;
+  }
+  state.lastScore = pct;
+  state.lastPass = pass;
+}
+
+/* ---------- CERTIFICATE ---------- */
+function renderCertificate(){
+  const mod = MODULES[state.moduleId];
+  const box = document.getElementById('qrcode');
+  box.innerHTML = "";
+  const certId = "VKT-26041-0917";
+  new QRCode(box, {
+    text: `SURAKSHA-AR|CERT:${certId}|WORKER:${state.workerName.replace(/\s/g,'')}|MODULE:${state.moduleId}|SCORE:${state.lastScore}|DATE:2026-09-09`,
+    width: 150, height: 150, colorDark: "#12213C", colorLight: "#ffffff"
+  });
+  document.getElementById('certDetails').innerHTML =
+    `<strong>Worker:</strong> ${state.workerName} &nbsp;·&nbsp; <strong>Module:</strong> ${mod.name}<br>
+     <strong>Score:</strong> ${state.lastScore}% &nbsp;·&nbsp; <strong>Cert ID:</strong> ${certId}`;
+}
+
+/* ---------- ADMIN DASHBOARD ---------- */
+function switchTab(name){
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.tab===name));
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('on', p.dataset.pane===name));
+}
+function renderDashboard(){
+  filterWorkers();
+}
+function filterWorkers(){
+  const q = (document.getElementById('workerSearch')?.value || "").toLowerCase();
+  const table = document.getElementById('workerTable');
+  table.innerHTML = "<tr><th>Worker</th><th>Module</th><th>Score</th><th>Status</th></tr>";
+  WORKERS.filter(w=>w.name.toLowerCase().includes(q)).forEach(w=>{
+    const tr = document.createElement('tr');
+    const scoreText = w.score===null ? "—" : w.score+"%";
+    const pillClass = w.status;
+    const pillText = w.status==='pass' ? 'Pass' : w.status==='fail' ? 'Retry' : 'Offline';
+    tr.innerHTML = `<td>${w.name}</td><td>${w.module}</td><td>${scoreText}</td><td><span class="pill ${pillClass}">${pillText}</span></td>`;
+    table.appendChild(tr);
+  });
+}
+function verifyCert(){
+  const val = document.getElementById('certInput').value.trim().toUpperCase();
+  const result = document.getElementById('verifyResult');
+  if(VALID_CERTS.includes(val)){
+    result.className = 'verify-result verify-ok';
+    result.textContent = `✓ Valid — certificate ${val} is on record and active.`;
+  } else {
+    result.className = 'verify-result verify-bad';
+    result.textContent = `✕ Not found — ${val || '(empty)'} does not match any issued certificate.`;
+  }
+}
+
+/* ---------- RESTART ---------- */
+function restartDemo(){
+  state = {lang:"hi", moduleId:"gas", hotspotsFound:0, qIndex:0, answers:[], workerName:"Ramesh Toppo"};
+  document.querySelectorAll('.lang-opt').forEach((o,i)=>{o.classList.toggle('sel', i===0); o.querySelector('span').textContent = i===0?'✓':'';});
+  document.querySelectorAll('.mod-card').forEach(c=>c.classList.toggle('sel', c.dataset.mod==='gas'));
+  applyI18n();
+  goTo(0);
+}
+
+/* simulate offline/online flicker for the offline-first story */
+setInterval(()=>{
+  const tag = document.getElementById('netTag');
+  const isOnline = tag.textContent.trim()==='ONLINE';
+  tag.innerHTML = isOnline ? '<span class="d" style="background:#F2A900;"></span>OFFLINE' : '<span class="d" style="background:#39d353;"></span>ONLINE';
+}, 7000);
+</script>
+</body>
+</html>
